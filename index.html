@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>latency-atlas · round trips from Kraków</title>
+  <meta name="description" content="A live map of internet round-trip times between Kraków and cities worldwide, measured every four minutes by RIPE Atlas anchors.">
+  <meta name="theme-color" content="#cfe0ef">
+  <meta property="og:title" content="latency-atlas">
+  <meta property="og:description" content="How long a packet takes to get from Kraków to cities around the world and back, live from RIPE Atlas.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/anybody-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="data/latest.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="frame" aria-hidden="true"></div>
+
+  <main class="atlas">
+    <figure class="map" aria-labelledby="map-title">
+      <div class="etiquette" aria-hidden="true">
+        <span class="etiquette-fr">Aller-retour</span>
+        <span class="etiquette-en">Round trip · Tam i z powrotem</span>
+      </div>
+      <svg id="map" viewBox="0 0 1000 1000" role="img" aria-labelledby="map-title map-desc">
+        <title id="map-title">World map centred on Kraków</title>
+        <desc id="map-desc">Every RIPE Atlas anchor city is marked by its round-trip time from Kraków. The register list beside the map holds the same values.</desc>
+      </svg>
+      <figcaption class="map-hint" id="map-hint">Hover or tap a postmark</figcaption>
+    </figure>
+
+    <div class="panel">
+      <header class="masthead">
+        <h1>latency-atlas</h1>
+        <p class="lead">How long a packet takes to get from Kraków to cities around the world and back. Every mark is a real ping, measured by RIPE Atlas in the last few minutes.</p>
+      </header>
+
+      <section class="collection" aria-label="Collection status">
+        <p class="collection-stamp" id="status" role="status">
+          <span class="collection-when">Collecting…</span>
+        </p>
+        <button type="button" class="stamp-button" id="replay" disabled>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 1.8-4.3"/><path d="M4 3.5v3.2h3.2"/></svg>
+          Replay the collection
+        </button>
+      </section>
+
+      <fieldset class="view-switch">
+        <legend>Place cities by</legend>
+        <div class="switch">
+          <input type="radio" name="view" id="view-distance" value="distance" checked>
+          <label for="view-distance">Distance</label>
+          <input type="radio" name="view" id="view-delay" value="delay">
+          <label for="view-delay">Delay</label>
+        </div>
+        <p class="view-note" id="view-note">Cities sit at their true direction and distance from Kraków.</p>
+      </fieldset>
+
+      <section class="slip" id="slip" aria-label="Selected city" tabindex="-1"></section>
+
+      <section class="zones" aria-labelledby="zones-title">
+        <h2 id="zones-title">Postal zones</h2>
+        <table class="zone-chart">
+          <thead><tr><th scope="col"><span class="visually-hidden">Mark</span></th><th scope="col">Zone</th><th scope="col">Round trip</th><th scope="col">Cities</th></tr></thead>
+          <tbody id="zone-rows"></tbody>
+        </table>
+      </section>
+
+      <section class="register" aria-labelledby="register-title">
+        <div class="register-head">
+          <h2 id="register-title">Register</h2>
+          <label class="visually-hidden" for="sort">Sort cities</label>
+          <select id="sort">
+            <option value="near">Fastest first</option>
+            <option value="far">Slowest first</option>
+            <option value="detour">Longest detour</option>
+            <option value="name">A to Z</option>
+          </select>
+        </div>
+        <label class="search">
+          <span class="visually-hidden">Find a city, country or anchor</span>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4.5 4.5"/></svg>
+          <input type="search" id="query" placeholder="Find a city, country or anchor" autocomplete="off" spellcheck="false">
+        </label>
+        <p class="register-count" id="register-count" aria-live="polite"></p>
+        <ol class="register-list" id="register"></ol>
+      </section>
+
+      <footer class="colophon">
+        <p>Data from <a href="https://atlas.ripe.net/">RIPE Atlas</a>, run by the RIPE NCC: the IPv4 anchoring mesh ping to <span class="nowrap">pl-krk-as204841</span>, measurement <a href="https://atlas.ripe.net/measurements/84162223" id="msm-link">84162223</a>. Each anchor sends three ICMP packets every four minutes; a city shows its fastest anchor's best packet.</p>
+        <p>An anchor pinging Kraków travels the same loop as Kraków pinging it, so the round trip is the same either way. Light in fibre covers about 204 km per millisecond; the floor is the great-circle distance at that speed, there and back.</p>
+        <p>Map: azimuthal equidistant centred on Kraków, square-root distance scale, from <a href="https://www.naturalearthdata.com/">Natural Earth</a>. <a href="https://github.com/0xgitpushpray/latency-atlas">Source and how to fork it for your city</a>.</p>
+      </footer>
+    </div>
+  </main>
+
+  <script src="vendor/d3-array.min.js"></script>
+  <script src="vendor/d3-geo.min.js"></script>
+  <script src="vendor/topojson-client.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

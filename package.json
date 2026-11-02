@@ -1,0 +1,13 @@
+{
+  "name": "latency-atlas",
+  "private": true,
+  "type": "module",
+  "description": "A live map of internet round-trip times from Kraków, built from RIPE Atlas anchor mesh pings.",
+  "scripts": {
+    "collect": "node scripts/collect.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
