@@ -17,8 +17,28 @@ import {
 const OUT = new URL('../data/', import.meta.url);
 const HISTORY_HOURS = 24 * 7;
 
+const RETRY_DELAYS_MS = [5_000, 20_000, 60_000];
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// RIPE Atlas occasionally answers 502/504 under load; retry those and network errors.
+async function fetchWithRetry(url, options = {}) {
+  const headers = { 'User-Agent': 'latency-atlas collector', ...options.headers };
+  for (let attempt = 0; ; attempt++) {
+    let res;
+    try {
+      res = await fetch(url, { ...options, headers });
+    } catch (err) {
+      if (attempt >= RETRY_DELAYS_MS.length) throw err;
+    }
+    if (res && res.status < 500 && res.status !== 429) return res;
+    if (attempt >= RETRY_DELAYS_MS.length) return res;
+    console.warn(`${url} answered ${res ? res.status : 'a network error'}; retrying in ${RETRY_DELAYS_MS[attempt] / 1000}s`);
+    await sleep(RETRY_DELAYS_MS[attempt]);
+  }
+}
+
 async function getJson(url) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'latency-atlas collector' } });
+  const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`${url} answered ${res.status}`);
   return res.json();
 }
@@ -87,7 +107,7 @@ function extendHistory(history, summary) {
   return { hours: hours.slice(drop), series: trimmed };
 }
 
-const [anchorRows, results] = await Promise.all([allAnchors(), fetchLatest()]);
+const [anchorRows, results] = await Promise.all([allAnchors(), fetchLatest(fetchWithRetry)]);
 
 const originRow = anchorRows.find((a) => a.id === ORIGIN_ANCHOR_ID);
 if (!originRow) throw new Error(`Origin anchor ${ORIGIN_ANCHOR_ID} not found`);
